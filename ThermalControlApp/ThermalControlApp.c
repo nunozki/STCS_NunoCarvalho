@@ -113,7 +113,7 @@ int main() {
 	srand(time(NULL)); // Inicializa o gerador de números aleatórios
 	createPipes(); // Cria os pipes
 
-	// Interface do usuário
+	// Interface do utilizador
 	do {
 		clearTerminal(); // Limpa o terminal antes de mostrar o menu
 
