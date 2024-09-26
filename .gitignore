@@ -27,7 +27,7 @@ x86/
 [Aa][Rr][Mm]/
 [Aa][Rr][Mm]64/
 bld/
-[Bb]in/
+#[Bb]in/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
@@ -396,57 +396,3 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
-
-# Ignorar arquivos de logs do MySQL
-*.log
-*.pid
-*.err
-
-# Ignorar arquivos de configuração temporária do MySQL
-*.cnf
-*.ini
-
-# Ignorar arquivos de backup do MySQL
-*.sql
-*.bak
-
-# Ignorar arquivos de tabelas temporárias e InnoDB
-*.ibd
-*.ibdata*
-*.frm
-*.myd
-*.myi
-*.mrg
-*.dblwr
-
-# Ignorar outros arquivos relacionados ao MySQL
-*.db
-*.db-shm
-*.db-wal
-*.sqlite
-*.sqlite3
-
-# Ignorar arquivos temporários do sistema operacional e editores
-.DS_Store
-Thumbs.db
-
-mysql-data/
-DataBases/Data/
-
-# Ignorar arquivos temporários do Qt
-*.o
-*.moc
-*.obj
-*.ilk
-*.pdb
-*.user
-*.pro.user
-*.autosave
-
-Qt/6.7.2/gcc_64/lib/libQt6QmlDom.a 
-Qt/6.7.2/gcc_64/lib/libQt6QmlLS.a 
-
-Qt/6.7.2/msvc2019_64/lib/Qt6QmlDom.lib
-Qt/6.7.2/msvc2019_64/lib/Qt6QmlLS.lib
-Qt/6.7.2/msvc2019_64/lib/Qt6QmlDomd.lib
-Qt/6.7.2/msvc2019_64/lib/Qt6QmlLSd.lib 
