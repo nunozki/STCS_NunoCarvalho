@@ -1,25 +1,44 @@
 ﻿// ThermalControlApp.h : Include file for standard system include files,
 // or project specific include files.
 
-#pragma once
+#ifndef THERMAL_CONTROL_APP_H
+#define THERMAL_CONTROL_APP_H
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <time.h>
-#include <iostream>
-#include <unistd.h>  // Para pipe(), fork(), read(), write()
-#include <cstring>   // Para strlen()
-#include <cstdlib>   // Para rand(), srand()
-#include <ctime>     // Para time()
+#include <unistd.h>
+#include <pthread.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/select.h>
 
-int fd[2]; // Descritores da pipe
-void createPipe(); // Método para criar a pipe
-void readFromPipe(); // Método para ler da pipe
-void writeToPipe(const char* message); // Método para escrever na pipe
-void simulateTemperature(); // Método para simular a temperatura
-float currentTemperature; // Variável para armazenar a temperatura atual
+#define MAX_BUFFER_SIZE 256  // Tamanho máximo do buffer para mensagens
 
-// TODO: Reference additional headers your program requires here.
+// Declaração de pipes para comunicação
+extern int infoPipe[2];      // Pipe para ler as informações de temperatura
+extern int responsePipe[2];  // Pipe para responder com o estado dos aquecedores
+
+// Estrutura do controlador PID
+typedef struct {
+	float kp;                // Ganho proporcional
+	float ki;                // Ganho integral
+	float kd;                // Ganho derivativo
+	float previousError;     // Erro anterior para cálculo do PID
+	float integral;          // Soma dos erros para o cálculo do PID
+} PIDController;
+
+// Funções para gerenciamento de pipes
+void createPipes();                         // Cria os pipes de comunicação
+void writeToInfoPipe(const char* message); // Escreve mensagem no infoPipe
+void readFromInfoPipe(char* buffer, size_t bufferSize); // Lê mensagem do infoPipe
+void writeToResponsePipe(const char* message); // Escreve mensagem no responsePipe
+void readFromResponsePipe(char* buffer, size_t bufferSize); // Lê mensagem do responsePipe
+
+// Função para simulação de temperatura
+void* simulateTemperature(void* arg); // Função que simula a leitura de temperatura
+float generateRandomTemperature(); // Gera uma temperatura aleatória
+
+#endif // THERMAL_CONTROL_APP_H

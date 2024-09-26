@@ -12,7 +12,7 @@ endif()
 project ("ThermalControlApp")
 
 # Add source to this project's executable.
-add_executable (ThermalControlApp "ThermalControlApp.cpp" "ThermalControlApp.h")
+add_executable (ThermalControlApp "ThermalControlApp.c" "ThermalControlApp.h")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET ThermalControlApp PROPERTY CXX_STANDARD 20)
