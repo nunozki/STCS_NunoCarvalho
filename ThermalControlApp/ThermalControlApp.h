@@ -11,6 +11,7 @@
 #include <signal.h>
 #include <string.h>
 
+
 // Estrutura PIDController
 typedef struct {
 	float Kp;
@@ -34,5 +35,6 @@ float calculatePIDControl(float error);
 void setSetpoint(float value);
 void setCurrentTemperature(float value);
 void* menuInput(void* arg);
+void reads();
 
 #endif // THERMAL_CONTROL_APP_H

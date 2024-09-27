@@ -6,8 +6,8 @@ int infoPipe[2];
 int responsePipe[2];
 bool simulateTemperatureActive = false;
 bool thermalControlEnabled = false;
-float currentTemperature;
-float setpointTemperature = 15.0f;
+float currentTemperature = 25.0f;
+float setpointTemperature = 20.0f;
 PIDController pidController = { 1.0f, 0.1f, 0.01f, 0.0f, 0.0f }; // Exemplo de PID
 pthread_t simulationThread;
 pthread_t menuThread;
@@ -94,11 +94,8 @@ void* simulateTemperature(void* arg) {
 		// Armazenar a temperatura atual antes de qualquer ajuste
 		float previousTemperature = currentTemperature;
 
-		// Exibir temperatura atual e parâmetros do PID
-		printf("Current Temperature: %.2f, Setpoint: %.2f\n", currentTemperature, setpointTemperature);
-		printf("PID Controller Values:\n");
-		printf(" Kp: %.2f, Ki: %.2f, Kd: %.2f\n", pidController.Kp, pidController.Ki, pidController.Kd);
-		printf(" Previous Error: %.2f, Integral: %.2f\n", pidController.previousError, pidController.integral);
+
+		char buffer[MAX_BUFFER_SIZE]; // Buffer para armazenar a mensagem do pipe
 
 		if (thermalControlEnabled) {
 			// Cálculo do controle PID
@@ -143,8 +140,12 @@ void* simulateTemperature(void* arg) {
 			}
 		}
 
+		// Prepara a mensagem para o pipe
+		snprintf(buffer, sizeof(buffer), "Current Temperature: %.2f, Control Output: %.2f", currentTemperature, controlOutput);
+		writeToInfoPipe(buffer); // Escreve no pipe
+
 		// Ajusta o intervalo da simulação
-		sleep(1);
+		usleep(500000);  // Simulação a cada 0.5 segundos
 	}
 
 	return NULL;
@@ -162,6 +163,7 @@ void readFromInfoPipe(char* buffer, size_t bufferSize) {
 	if (read(infoPipe[0], buffer, bufferSize) == -1) {
 		perror("Failed to read from infoPipe");
 	}
+	snprintf(buffer, bufferSize, "Simulated data from pipe");
 }
 
 // Função para escrever na responsePipe
@@ -265,68 +267,174 @@ void setCurrentTemperature(float value) {
 	}
 }
 
+void reads()
+{
+	while (true)
+	{
+		printf("Reading temperature from infoPipe...\n");
+		char buffer[MAX_BUFFER_SIZE];
+		memset(buffer, 0, sizeof(buffer));  // Limpar o buffer
+		readFromInfoPipe(buffer, sizeof(buffer));  // Lê a mensagem do pipe
+
+		if (strlen(buffer) > 0) {
+			printf("Received: %s\n", buffer);  // Exibe a mensagem recebida
+		}
+		else {
+			printf("No data received from pipe.\n");
+		}
+
+		// Exibir temperatura atual e parâmetros do PID
+		printf("Current Temperature: %.2f, Setpoint: %.2f\n", currentTemperature, setpointTemperature);
+		printf("PID Controller Values:\n");
+		printf(" Kp: %.2f, Ki: %.2f, Kd: %.2f\n", pidController.Kp, pidController.Ki, pidController.Kd);
+		printf(" Previous Error: %.2f, Integral: %.2f\n", pidController.previousError, pidController.integral);
+
+		// Verifica se a tecla ESC foi pressionada
+		if (getchar() == 27) { // 27 é o código ASCII para ESC
+			printf("ESC pressed, exiting...\n");
+			break;
+		}
+
+		usleep(500000);  // Simulação a cada 0.5 segundos
+	}
+	return;
+}
+
 void* menuInput(void* arg) {
 	char command[MAX_BUFFER_SIZE];
-	while (1) {
+	int firstOption = -1;  // Armazena a primeira escolha
+	int secondOption = -1; // Armazena a segunda escolha
+
+	int option = 0;
+
+	do {
 		clearTerminal(); // Limpa o terminal a cada iteração
 		printf("Thermal Control Application\n");
-		printf("1. Enable Thermal Control\n");
-		printf("2. Disable Thermal Control\n");
+
+		if (firstOption == -1) {
+			// Se nenhuma opção foi escolhida ainda
+			printf("1. Enable Thermal Control\n");
+			printf("2. Disable Thermal Control\n");
+		}
+		else if (secondOption == -1) {
+			// Se uma opção já foi escolhida, remove a possibilidade de repetição
+			if (firstOption == 1) {
+				printf("2. Disable Thermal Control\n");
+			}
+			else {
+				printf("1. Enable Thermal Control\n");
+			}
+		}
+
+		// Exibe as outras opções
 		printf("3. Set PID Parameters\n");
 		printf("4. Set Setpoint Temperature\n");
 		printf("5. Set Current Temperature\n");
-		printf("6. Exit\n");
+		printf("6. Read from Pipe\n");
+		printf("7. Exit\n");
+
 		printf("Choose an option: ");
 
 		if (fgets(command, sizeof(command), stdin) != NULL) {
-			int option = atoi(command);
+			option = atoi(command);
 
-			switch (option) {
-			case 1:
-				thermalControlEnabled = true;
-				printf("Thermal Control Enabled\n");
-				break;
-			case 2:
-				thermalControlEnabled = false;
-				printf("Thermal Control Disabled\n");
-				break;
-			case 3: {
-				float kp, ki, kd;
-				printf("Enter Kp: ");
-				scanf("%f", &kp);
-				printf("Enter Ki: ");
-				scanf("%f", &ki);
-				printf("Enter Kd: ");
-				scanf("%f", &kd);
-				setPIDParameters(kp, ki, kd);
-				break;
+			if (firstOption == -1) {
+				// Primeira escolha: ou ativa ou desativa o controlo térmico
+				if (option == 1 || option == 2) {
+					firstOption = option;
+					if (option == 1) {
+						thermalControlEnabled = true;
+						printf("Thermal Control Enabled\n");
+					}
+					else if (option == 2) {
+						thermalControlEnabled = false;
+						printf("Thermal Control Disabled\n");
+					}
+				}
+				else if (option == 7) {
+					thermalControlEnabled = false;
+					simulateTemperatureActive = false;
+					pthread_join(simulationThread, NULL); // Aguardar a conclusão da simulação;
+					printf("Exiting program...\n");
+					exit(0);
+					continue;
+				}
+				else {
+					printf("Invalid option. Please choose 1 or 2.\n");
+					continue;
+				}
 			}
-			case 4:
-				setSetpoint(setpointTemperature);
-				break;
-			case 5: {
-				float currentTemp;
-				printf("Enter Current Temperature (-20 to 20): ");
-				scanf("%f", &currentTemp);
-				setCurrentTemperature(currentTemp);
-				break;
+			else if (secondOption == -1) {
+				// Segunda escolha: a outra opção deve ser selecionada
+				if ((firstOption == 1 && option == 2) || (firstOption == 2 && option == 1)) {
+					secondOption = option;
+					if (option == 1) {
+						thermalControlEnabled = true;
+						printf("Thermal Control Enabled\n");
+					}
+					else if (option == 2) {
+						thermalControlEnabled = false;
+						printf("Thermal Control Disabled\n");
+					}
+				}
+				else if (option == 7) {
+					thermalControlEnabled = false;
+					simulateTemperatureActive = false;
+					pthread_join(simulationThread, NULL); // Aguardar a conclusão da simulação;
+					printf("Exiting program...\n");
+					exit(0);
+					continue;
+				}
+				else {
+					printf("Invalid option. Please choose the remaining option (1 or 2).\n");
+					continue;
+				}
 			}
-			case 6:
-				thermalControlEnabled = false;
-				simulateTemperatureActive = false;
-				pthread_join(simulationThread, NULL); // Aguardar a conclusão da simulação
-				exit(0);
-			default:
-				printf("Invalid option. Please try again.\n");
-				break;
+			else {
+				// Permitir apenas ajustes normais após as duas escolhas
+				switch (option) {
+				case 3: {
+					float kp, ki, kd;
+					printf("Enter Kp: ");
+					scanf("%f", &kp);
+					printf("Enter Ki: ");
+					scanf("%f", &ki);
+					printf("Enter Kd: ");
+					scanf("%f", &kd);
+					setPIDParameters(kp, ki, kd);
+					break;
+				}
+				case 4:
+					setSetpoint(setpointTemperature);
+					break;
+				case 5:
+					float currentTemp;
+					printf("Enter Current Temperature %.2f and %.2f:\n", MIN_TEMPERATURE, MAX_TEMPERATURE);
+					scanf("%f", &currentTemp);
+					setCurrentTemperature(currentTemp);
+					break;
+				case 6:
+					reads();
+					break;
+				case 7:
+					thermalControlEnabled = false;
+					simulateTemperatureActive = false;
+					pthread_join(simulationThread, NULL); // Aguardar a conclusão da simulação;
+					printf("Exiting program...\n");
+					exit(0);
+					break;
+				default:
+					printf("Invalid option. Please try again.\n");
+					break;
+				}
 			}
 		}
-	}
+	} while (option != 7);
 }
 
 int main() {
-	createPipes();
-	signal(SIGINT, SIG_IGN); // Ignorar o sinal de interrupção
+	createPipes(); // Cria os pipes
+	signal(SIGINT, SIG_IGN); // Ignora o sinal de interrupção
 
 	// Certifique-se de que currentTemperature está dentro dos limites ao iniciar
 	if (currentTemperature > MAX_TEMPERATURE) {
@@ -348,6 +456,8 @@ int main() {
 
 	// Aguarda a finalização do menu thread
 	pthread_join(menuThread, NULL);
+
+	// Aqui você pode adicionar a limpeza de recursos, se necessário.
 
 	return EXIT_SUCCESS;
 }
