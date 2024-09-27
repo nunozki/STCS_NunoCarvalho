@@ -64,7 +64,7 @@ void adjustTemperature(float adjustment) {
 		}
 	}
 	else {
-		// Se o controle térmico não estiver ativado, diminui constantemente a temperatura
+		// Se o controlo térmico não estiver ativado, diminui constantemente a temperatura
 		currentTemperature -= 0.5f; // Ajusta para diminuir a temperatura
 
 		// Limitar a temperatura dentro do limite inferior
@@ -78,7 +78,7 @@ void adjustTemperature(float adjustment) {
 	snprintf(message, sizeof(message), "THERM-01_TEMP-%.2f;", currentTemperature);
 	writeToInfoPipe(message);
 
-	// Exibe a temperatura no terminal
+	// Mostre a temperatura no terminal
 	printf("Adjusted Temperature: %.2f (Adjustment: %.2f)\n", currentTemperature, adjustment);
 }
 
@@ -133,7 +133,7 @@ void* simulateTemperature(void* arg) {
 			adjustTemperature(controlOutput);
 		}
 		else {
-			// Se o controle térmico não estiver ativado, diminuir constantemente a temperatura
+			// Se o controlo térmico não estiver ativado, diminuir constantemente a temperatura
 			if (currentTemperature > MIN_TEMPERATURE) {
 				currentTemperature -= 0.5f; // Ajusta para diminuir a temperatura
 				printf("Thermal Control Disabled. Decreasing Temperature: %.2f\n", currentTemperature);
