@@ -6,7 +6,6 @@ int infoPipe[2];
 int responsePipe[2];
 bool simulateTemperatureActive = false;
 bool thermalControlEnabled = false;
-bool isSimulationRunning = false;
 float currentTemperature;
 float setpointTemperature = 15.0f;
 PIDController pidController = { 1.0f, 0.1f, 0.01f, 0.0f, 0.0f }; // Exemplo de PID
